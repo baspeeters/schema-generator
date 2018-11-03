@@ -72,13 +72,14 @@ final class GenerateTypesCommand extends Command
         $defaultOutput = $this->defaultOutput ? realpath($this->defaultOutput) : null;
         $outputDir = $input->getArgument('output');
         $configArgument = $input->getArgument('config');
+        $dir = realpath($input->getArgument('output'));
 
-        if ($dir = realpath($input->getArgument('output'))) {
+        if (!$dir) {
+            if (!is_dir($dir) && !$defaultOutput) {
+                throw new \InvalidArgumentException(sprintf('The file "%s" is not a directory.', $dir));
+            }
+
             if (!is_dir($dir)) {
-                if (!$this->defaultOutput) {
-                    throw new \InvalidArgumentException(sprintf('The file "%s" is not a directory.', $dir));
-                }
-
                 $dir = $defaultOutput;
                 $configArgument = $outputDir;
             }
@@ -146,7 +147,7 @@ final class GenerateTypesCommand extends Command
         $goodRelationsBridge = new GoodRelationsBridge($relations);
         $cardinalitiesExtractor = new CardinalitiesExtractor($graphs, $goodRelationsBridge);
 
-        $loader = new \Twig_Loader_Filesystem(__DIR__.'/../../templates/');
+        $loader = new \Twig_Loader_Filesystem(__DIR__ . '/../../templates/');
         $twig = new \Twig_Environment($loader, ['autoescape' => false, 'debug' => $processedConfiguration['debug']]);
         $twig->addFilter(new \Twig_SimpleFilter('ucfirst', 'ucfirst'));
         $twig->addFilter(new \Twig_SimpleFilter('pluralize', [Inflector::class, 'pluralize']));
